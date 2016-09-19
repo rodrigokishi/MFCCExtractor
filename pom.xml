@@ -89,6 +89,12 @@
       <artifactId>xuggle-video</artifactId>
       <version>${openimaj.version}</version>
       <scope>compile</scope>
+      <exclusions>
+      	<exclusion>
+      		<artifactId>logback-classic</artifactId>
+      		<groupId>ch.qos.logback</groupId>
+      	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.openimaj</groupId>

@@ -1,7 +1,18 @@
 package intermidia;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.util.ArrayList;
+
+import javassist.bytecode.ByteArray;
+
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 
 import org.openimaj.audio.SampleChunk;
 import org.openimaj.audio.features.MFCC;
@@ -23,9 +34,28 @@ public class MFCCExtractor
     	    	
     	final XuggleAudio xa = new XuggleAudio(source);    	
     	MFCC mfcc = new MFCC( xa );   	    	
-    	SampleChunk sc = null;    	
+    	SampleChunk sc = null;
+    	
+    	
+    	    	   
+    	SampleChunk sa = xa.nextSampleChunk();
+    	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();    	
+    	while(sa != null)
+    	{
+    		byteArrayOutputStream.write(sa.getSamples());    		
+    		sa = xa.nextSampleChunk();
+    	}   	
+    	ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+    	AudioInputStream audioInputStream = new AudioInputStream(byteArrayInputStream, AudioFileFormat.Type.WAVE,1);
+    	AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, new File("sample.wav"));
+    	System.exit(0);
+    	
+    	
+    	
+    	
     	
     	FileWriter mfccWriter = new FileWriter(args[2]);
+    	
 
     	int shotNum = 0;
     	long videoEndBoundary = shotList.getShot(shotList.listSize() - 1).getEndBoundary().getTimecode().getTimecodeInMilliseconds();

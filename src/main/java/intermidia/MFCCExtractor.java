@@ -3,14 +3,9 @@ package intermidia;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.util.ArrayList;
-
-import javassist.bytecode.ByteArray;
 
 import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 
@@ -32,23 +27,52 @@ public class MFCCExtractor
 		ShotList shotList = ShotReader.readFromCSV(xuggleSource, args[1]);	
 		xuggleSource.close();
     	    	
-    	final XuggleAudio xa = new XuggleAudio(source);    	
-    	MFCC mfcc = new MFCC( xa );   	    	
+    	final XuggleAudio xuggleAudioSource = new XuggleAudio(source);    	
+    	MFCC mfcc = new MFCC( xuggleAudioSource );   	    	
     	SampleChunk sc = null;
     	
     	
-    	    	   
-    	SampleChunk sa = xa.nextSampleChunk();
+
+    	
+
+    	final XuggleAudio xuggleAudioSourceCopy = new XuggleAudio(source);
+    	SampleChunk sa;
     	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();    	
-    	while(sa != null)
+    	String outputAudiosFolder = "shotAudios/";
+    	int shotNum = 0;
+    	long videoEndBoundary = shotList.getShot(shotList.listSize() - 1).getEndBoundary().getTimecode().getTimecodeInMilliseconds();
+    	while((sa = xuggleAudioSourceCopy.nextSampleChunk() )!= null
+    			&& sa.getStartTimecode().getTimecodeInMilliseconds() < videoEndBoundary)
     	{
-    		byteArrayOutputStream.write(sa.getSamples());    		
-    		sa = xa.nextSampleChunk();
-    	}   	
-    	ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-    	AudioInputStream audioInputStream = new AudioInputStream(byteArrayInputStream, AudioFileFormat.Type.WAVE,1);
-    	AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, new File("sample.wav"));
-    	System.exit(0);
+    		byteArrayOutputStream.flush();
+    		byteArrayOutputStream.write(sa.getSamples());
+    		byteArrayOutputStream.flush();
+    		
+    		long shotEndBoundary = shotList.getShot(shotNum).getEndBoundary().getTimecode().getTimecodeInMilliseconds();
+    		if(sa.getStartTimecode().getTimecodeInMilliseconds() > shotEndBoundary )
+    		{
+    			ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+    			AudioInputStream audioInputStream = new AudioInputStream(byteArrayInputStream, xuggleAudioSource.getFormat().getJavaAudioFormat(), byteArrayOutputStream.size());
+    			String audioSampleName = "s" + String.format("%04d", shotNum) + ".wav";
+    			AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, new File(outputAudiosFolder + audioSampleName));    			
+    			shotNum++;
+    			
+    			//Clears the byteArrayOutputStream
+    			byteArrayOutputStream.reset();
+    		}
+    		
+    		sa = xuggleAudioSourceCopy.nextSampleChunk();
+    	} 
+    	//Write the last shot audio
+    	{
+			ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+			AudioInputStream audioInputStream = new AudioInputStream(byteArrayInputStream, xuggleAudioSource.getFormat().getJavaAudioFormat(), byteArrayOutputStream.size());
+			String audioSampleName = "s" + String.format("%04d", shotNum) + ".wav";
+			AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, new File(outputAudiosFolder + audioSampleName));    			    		
+    	}
+    	xuggleAudioSourceCopy.close();
+    	
+    	    
     	
     	
     	
@@ -56,9 +80,8 @@ public class MFCCExtractor
     	
     	FileWriter mfccWriter = new FileWriter(args[2]);
     	
-
-    	int shotNum = 0;
-    	long videoEndBoundary = shotList.getShot(shotList.listSize() - 1).getEndBoundary().getTimecode().getTimecodeInMilliseconds();
+    	shotNum = 0;
+    	videoEndBoundary = shotList.getShot(shotList.listSize() - 1).getEndBoundary().getTimecode().getTimecodeInMilliseconds();
 		while( (sc = mfcc.nextSampleChunk()) != null && sc.getStartTimecode().getTimecodeInMilliseconds() < videoEndBoundary)
 		{			
 			long shotEndBoundary = shotList.getShot(shotNum).getEndBoundary().getTimecode().getTimecodeInMilliseconds();
@@ -81,7 +104,7 @@ public class MFCCExtractor
 			System.out.println();
 			mfccWriter.write("\n");
 		}
-		xa.close();		
+		xuggleAudioSource.close();		
 		mfccWriter.close();
 
     }

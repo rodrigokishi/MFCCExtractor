@@ -19,6 +19,7 @@ import TVSSUtils.ShotReader;
 
 public class MFCCExtractor 
 {
+	//Usage: MFCCExtractor <video file> <shot list csv> <audio segments output folder> <mfcc feature vectors file>
     public static void main( String[] args ) throws Exception
     {
     	File source = new File(args[0]);
@@ -29,16 +30,12 @@ public class MFCCExtractor
     	    	
     	final XuggleAudio xuggleAudioSource = new XuggleAudio(source);    	
     	MFCC mfcc = new MFCC( xuggleAudioSource );   	    	
-    	SampleChunk sc = null;
-    	
-    	
-
-    	
+    	SampleChunk sc = null;    	    	   
 
     	final XuggleAudio xuggleAudioSourceCopy = new XuggleAudio(source);
     	SampleChunk sa;
     	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();    	
-    	String outputAudiosFolder = "shotAudios/";
+    	String outputAudiosFolder = args[2] + "/";
     	int shotNum = 0;
     	long videoEndBoundary = shotList.getShot(shotList.listSize() - 1).getEndBoundary().getTimecode().getTimecodeInMilliseconds();
     	while((sa = xuggleAudioSourceCopy.nextSampleChunk() )!= null
@@ -78,7 +75,7 @@ public class MFCCExtractor
     	
     	
     	
-    	FileWriter mfccWriter = new FileWriter(args[2]);
+    	FileWriter mfccWriter = new FileWriter(args[3]);
     	
     	shotNum = 0;
     	videoEndBoundary = shotList.getShot(shotList.listSize() - 1).getEndBoundary().getTimecode().getTimecodeInMilliseconds();

@@ -35,7 +35,7 @@ public class MFCCExtractor
     	final XuggleAudio xuggleAudioSourceCopy = new XuggleAudio(source);
     	SampleChunk sa;
     	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();    	
-    	String outputAudiosFolder = args[2] + "/";
+    	String outputAudiosFolder = args[2];
     	int shotNum = 0;
     	long videoEndBoundary = shotList.getShot(shotList.listSize() - 1).getEndBoundary().getTimecode().getTimecodeInMilliseconds();
     	while((sa = xuggleAudioSourceCopy.nextSampleChunk() )!= null
@@ -69,12 +69,7 @@ public class MFCCExtractor
     	}
     	xuggleAudioSourceCopy.close();
     	
-    	    
-    	
-    	
-    	
-    	
-    	
+
     	FileWriter mfccWriter = new FileWriter(args[3]);
     	
     	shotNum = 0;
@@ -103,6 +98,6 @@ public class MFCCExtractor
 		}
 		xuggleAudioSource.close();		
 		mfccWriter.close();
-
+		System.exit(0);
     }
 }

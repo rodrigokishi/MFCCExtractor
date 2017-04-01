@@ -11,7 +11,6 @@ import javax.sound.sampled.AudioSystem;
 
 import org.openimaj.audio.SampleChunk;
 import org.openimaj.audio.features.MFCC;
-import org.openimaj.audio.timecode.AudioTimecode;
 import org.openimaj.video.xuggle.XuggleAudio;
 import org.openimaj.video.xuggle.XuggleVideo;
 
@@ -41,17 +40,14 @@ public class MFCCExtractor
     	{    		
     		VideoPinpointer.seek(inputVideo, shot.getEndBoundary());
     		long endBoundary = inputVideo.getCurrentTimecode().getTimecodeInMilliseconds();    		
-    		
-    		
-    		while(	(sc = inputAudio.nextSampleChunk()) != null &&    				
-    				sc.getStartTimecode().getTimecodeInMilliseconds() < endBoundary 
-    				
+    		    		
+    		while(	(sc = inputAudio.nextSampleChunk()) != null &&
+    				sc.getStartTimecode().getTimecodeInMilliseconds() < endBoundary     				
     				)
     		{
         		byteArrayOutputStream.flush();
         		byteArrayOutputStream.write(sc.getSamples());
-        		byteArrayOutputStream.flush();
-        		
+        		byteArrayOutputStream.flush();        		
     		}
     		
     		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());

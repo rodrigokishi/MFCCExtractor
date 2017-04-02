@@ -35,7 +35,7 @@ public class MFCCExtractor
 
     	//Generate and write shot audio files
     	int shotNum = 0;
-    	System.out.println("Generating audio segments.");
+    	//System.out.println("Generating audio segments.");
     	for(Shot shot : shotList.getList())
     	{    		
     		VideoPinpointer.seek(inputVideo, shot.getEndBoundary());
@@ -58,7 +58,7 @@ public class MFCCExtractor
 			
 			//Clear the byteArrayOutputStream
 			byteArrayOutputStream.reset();
-			System.out.println("Audio file from shot " + (shotNum -1) + " written on disk.");
+			//System.out.println("Audio file from shot " + (shotNum -1) + " written on disk.");
     	}
     	inputAudio.close();
     	inputVideo.close();
@@ -66,7 +66,7 @@ public class MFCCExtractor
     	
     	
     	//Generate and write MFCC descriptors
-    	System.out.println("Computing MFCC descriptors.");
+    	//System.out.println("Computing MFCC descriptors.");
     	XuggleAudio inputAudioMFCC = new XuggleAudio(inputFile);
     	XuggleVideo inputVideoMFCC = new XuggleVideo(inputFile);
     	MFCC mfcc = new MFCC( inputAudioMFCC );
@@ -103,7 +103,7 @@ public class MFCCExtractor
     			mfccWriter.write("\n");
     		}
     		
-    		System.out.println("Shot " + shotNum + " produced " + mfccQTY + " MFCC descriptors.");
+    		//System.out.println("Shot " + shotNum + " produced " + mfccQTY + " MFCC descriptors.");
     		shotNum++;
     	}
     	inputVideoMFCC.close();

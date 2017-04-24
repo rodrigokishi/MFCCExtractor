@@ -25,66 +25,10 @@ public class MFCCExtractor
     public static void main( String[] args ) throws Exception
     {
     	File inputFile = new File(args[0]);
-    	//XuggleVideo inputVideo = new XuggleVideo(inputFile);
     	ShotList shotList = ShotReader.readFromCSV(args[1]);
-    	
-    	//XuggleAudio inputAudio = new XuggleAudio(inputFile);
-    	//XuggleAudio inputAudio = new XuggleAudio(inputFile);
-    	   	
-    	//SampleChunk sc = null; 
+    	   	   	
     	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();    	
-    	String outputAudiosFolder = args[2];
-
-    	//Generate and write shot audio files
-/*    	int shotNum = 0;
-    	//System.out.println("Generating audio segments.");
-    	for(Shot shot : shotList.getList())
-    	{    		
-    		VideoPinpointer.seek(inputVideo, shot.getEndBoundary());
-    		long endBoundary = inputVideo.getCurrentTimecode().getTimecodeInMilliseconds();
-    		//If there is only one audio stream
-    		if(inputAudio.getFormat().getNumChannels() == 1)
-    		{
-	    		while(	(sc = inputAudio.nextSampleChunk()) != null &&
-	    				sc.getStartTimecode().getTimecodeInMilliseconds() < endBoundary     				
-	    				)
-	    		{    			
-	        		byteArrayOutputStream.flush();
-	       			byteArrayOutputStream.write(sc.getSamples());
-	        		byteArrayOutputStream.flush();        		
-	    		}
-    		}
-    		//For dual audio videos, use first audio stream.
-    		else
-    		{
-	    		int pair = 0;	
-	    		while(	(sc = inputAudio.nextSampleChunk()) != null &&
-	    				sc.getStartTimecode().getTimecodeInMilliseconds() < endBoundary     				
-	    				)
-	    		{    			
-	    			if(pair % 2 == 0)
-	    			{
-	    				byteArrayOutputStream.flush();
-	        			byteArrayOutputStream.write(sc.getSamples());
-	        			byteArrayOutputStream.flush();
-	    			}
-	        		pair++;
-	    		}
-    		}
-    		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-			AudioInputStream audioInputStream = new AudioInputStream(byteArrayInputStream, inputAudio.getFormat().getJavaAudioFormat(), byteArrayOutputStream.size());
-			String audioSampleName = "s" + String.format("%04d", shotNum) + ".wav";
-			AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, new File(outputAudiosFolder + audioSampleName));			
-			shotNum++;
-			
-			//Clear the byteArrayOutputStream
-			byteArrayOutputStream.reset();
-			//System.out.println("Audio file from shot " + (shotNum -1) + " written on disk.");
-    	}
-    	inputAudio.close();
-    	inputVideo.close();
-    	System.exit(0);*/
-    	
+    	String outputAudiosFolder = args[2];   	
     	    	
     	//Generate and write MFCC descriptors
     	XuggleAudio inputAudioMFCC = new XuggleAudio(inputFile);
@@ -170,7 +114,6 @@ public class MFCCExtractor
 			//Clear the byteArrayOutputStream
 			byteArrayOutputStream.reset();
 
-    		//System.out.println("Shot " + shotNum + " produced " + mfccQTY + " MFCC descriptors.");
     		shotNum++;
     	}
     	inputVideoMFCC.close();

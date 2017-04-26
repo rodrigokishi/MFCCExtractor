@@ -23,13 +23,14 @@ public class MFCCExtractor
 {
 	//Usage: MFCCExtractor <video file> <shot list csv> <audio segments output folder> <mfcc feature vectors file>
     public static void main( String[] args ) throws Exception
-    {
+    { 	
     	File inputFile = new File(args[0]);
     	ShotList shotList = ShotReader.readFromCSV(args[1]);
     	   	   	
     	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();    	
     	String outputAudiosFolder = args[2];   	
     	    	
+    	
     	//Generate and write MFCC descriptors
     	XuggleAudio inputAudioMFCC = new XuggleAudio(inputFile);
     	XuggleVideo inputVideoMFCC = new XuggleVideo(inputFile);
@@ -63,6 +64,7 @@ public class MFCCExtractor
 	        		byteArrayOutputStream.flush();
 	       			byteArrayOutputStream.write(scMFCC.getSamples());
 	        		byteArrayOutputStream.flush(); 
+	        			        			        	
 	    		}
     		}
     		//Dual audio videos

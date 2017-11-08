@@ -11,6 +11,7 @@ import javax.sound.sampled.AudioSystem;
 
 import org.openimaj.audio.SampleChunk;
 import org.openimaj.audio.features.MFCC;
+import org.openimaj.audio.processor.FixedSizeSampleAudioProcessor;
 import org.openimaj.video.xuggle.XuggleAudio;
 import org.openimaj.video.xuggle.XuggleVideo;
 
@@ -32,7 +33,17 @@ public class MFCCExtractor
     	    	
     	
     	//Generate and write MFCC descriptors
-    	XuggleAudio inputAudioMFCC = new XuggleAudio(inputFile);
+    	XuggleAudio inputAudioMFCCRaw = new XuggleAudio(inputFile);    	
+    	//Calculate how many audio samples must be in a millisecond
+    	double samplesInAMillisecond = inputAudioMFCCRaw.getFormat().getSampleRateKHz();
+    	//30ms Audio frames
+    	int frameSizeInSamples = (int)(samplesInAMillisecond * 30);
+    	//10ms Overlap between frames
+    	int overlapSizeInSamples = (int)(samplesInAMillisecond *10);
+    	//Fixes the audio processor to work with 30ms windows and 10ms overlap between adjacent windows
+    	FixedSizeSampleAudioProcessor inputAudioMFCC = new FixedSizeSampleAudioProcessor(inputAudioMFCCRaw, 
+    			frameSizeInSamples, overlapSizeInSamples);
+    	
     	XuggleVideo inputVideoMFCC = new XuggleVideo(inputFile);
     	MFCC mfcc = new MFCC( inputAudioMFCC );
     	SampleChunk scMFCC = null;
@@ -119,7 +130,9 @@ public class MFCCExtractor
     		shotNum++;
     	}
     	inputVideoMFCC.close();
-    	inputAudioMFCC.close();
+    	inputAudioMFCCRaw.close();
+    	
+    	
     	mfccWriter.close();    	    	
     	
     	System.exit(0);

@@ -17,95 +17,81 @@ import org.openimaj.video.xuggle.XuggleVideo;
 
 import TVSSUnits.Shot;
 import TVSSUnits.ShotList;
+import TVSSUtils.AudioStreamSelector;
 import TVSSUtils.ShotReader;
-import TVSSUtils.VideoPinpointer;
 
-public class MFCCExtractor 
-{
-	//Usage: MFCCExtractor <video file> <shot list csv> <audio segments output folder> <mfcc feature vectors file>
+public class MFCCExtractor
+{	
+	
+	//Usage: MFCCExtractor <in: video file> <in: shot list csv> <in: audio segments output folder> <out: mfcc feature vectors file> <in: audio streams> <in: stream to use>
     public static void main( String[] args ) throws Exception
-    { 	
+    { 	    	   	
     	File inputFile = new File(args[0]);
     	ShotList shotList = ShotReader.readFromCSV(args[1]);
+    	int audioStreams = Integer.parseInt(args[4]);
+    	int selectedStream = Integer.parseInt(args[5]);
+    	XuggleAudio inputAudioMFCCRaw = new XuggleAudio(inputFile);    	 
     	   	   	
     	ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();    	
-    	String outputAudiosFolder = args[2];   	
-    	    	
+    	String outputAudiosFolder = args[2];   	    	    	    	
     	
-    	//Generate and write MFCC descriptors
-    	XuggleAudio inputAudioMFCCRaw = new XuggleAudio(inputFile);    	
+    	//If there is more than one stream (dual audio videos for example) choose one
+    	if(audioStreams > 1)
+    	{
+    		inputAudioMFCCRaw = AudioStreamSelector.separateAudioStream(inputAudioMFCCRaw, audioStreams, selectedStream);
+    	}    	    	
+    	
     	//Calculate how many audio samples must be in a millisecond
     	double samplesInAMillisecond = inputAudioMFCCRaw.getFormat().getSampleRateKHz();
     	//30ms Audio frames
     	int frameSizeInSamples = (int)(samplesInAMillisecond * 30);
     	//10ms Overlap between frames
     	int overlapSizeInSamples = (int)(samplesInAMillisecond *10);
-    	//Fixes the audio processor to work with 30ms windows and 10ms overlap between adjacent windows
-    	FixedSizeSampleAudioProcessor inputAudioMFCC = new FixedSizeSampleAudioProcessor(inputAudioMFCCRaw, 
+
+    	//Create an audio processor which works with 30ms windows and 10ms overlap between adjacent windows    	    	
+		FixedSizeSampleAudioProcessor inputAudioMFCC = new FixedSizeSampleAudioProcessor(inputAudioMFCCRaw, 
     			frameSizeInSamples, overlapSizeInSamples);
-    	
-    	XuggleVideo inputVideoMFCC = new XuggleVideo(inputFile);
+				
+		
+		
+		//Generate and write MFCC descriptors
+    	XuggleVideo inputVideoMFCC = new XuggleVideo(inputFile);    	
+    	double videoFPS = inputVideoMFCC.getFPS();
+    	inputVideoMFCC.close();
     	MFCC mfcc = new MFCC( inputAudioMFCC );
     	SampleChunk scMFCC = null;
     	FileWriter mfccWriter = new FileWriter(args[3]);
-    	int shotNum = 0;
+    	int shotNum = 0;    	
+    	long chunkIndex = 0;    	
     	for(Shot shot : shotList.getList())
     	{
-    		VideoPinpointer.seek(inputVideoMFCC, shot.getEndBoundary());
-    		long endBoundary = inputVideoMFCC.getCurrentTimecode().getTimecodeInMilliseconds();    		
-    		
+    		long endBoundary = Math.round(shot.getEndBoundary() / videoFPS) * 1000;    		
     		int mfccQTY = 0;
-    		//Single audio videos
-    		if(inputAudioMFCC.getFormat().getNumChannels() == 1)
-    		{
-	    		while( (scMFCC = mfcc.nextSampleChunk()) != null &&
-	    				scMFCC.getStartTimecode().getTimecodeInMilliseconds() < endBoundary     				
-	    				)
-	    		{
-	    			double[][] mfccs = mfcc.getLastCalculatedFeature();
-	    			mfccWriter.write(Integer.toString(shotNum));
-	    			for(int i = 0; i < mfccs[0].length; i++)
-	    			{
-	    				mfccWriter.write(" " + mfccs[0][i]);
-	    			}
-	    			mfccWriter.write("\n");
-	    			mfccQTY++;
-	    			
-	    			//Write output stream
+    		scMFCC = mfcc.nextSampleChunk();
+    		while( scMFCC  != null &&
+    				//I don't know why, but getTimecodeInMilliseconds returns two times the correct timecode.
+    				(scMFCC.getStartTimecode().getTimecodeInMilliseconds()/scMFCC.getFormat().getNumChannels()) < endBoundary     				
+    				)
+    		{	  
+    			double[][] mfccs = mfcc.getLastCalculatedFeature();
+    			mfccWriter.write(Integer.toString(shotNum));
+    			for(int i = 0; i < mfccs[0].length; i++)
+    			{
+    				mfccWriter.write(" " + mfccs[0][i]);
+    			}
+    			mfccWriter.write("\n");
+    			mfccQTY++;
+    			
+    			//Write output stream not including overlapped chunks 
+    			if(chunkIndex % 3 == 0)
+    			{
 	        		byteArrayOutputStream.flush();
 	       			byteArrayOutputStream.write(scMFCC.getSamples());
 	        		byteArrayOutputStream.flush(); 
-	        			        			        	
-	    		}
-    		}
-    		//Dual audio videos
-    		else
-    		{
-    			int pair = 0;
-	    		while( (scMFCC = mfcc.nextSampleChunk()) != null &&
-	    				scMFCC.getStartTimecode().getTimecodeInMilliseconds() < endBoundary     				
-	    				)
-	    		{
-	    			if(pair % 2 == 0)
-	    			{	    				
-		    			double[][] mfccs = mfcc.getLastCalculatedFeature();
-		    			
-		    			mfccWriter.write(Integer.toString(shotNum));
-		    			for(int i = 0; i < mfccs[0].length; i++)
-		    			{
-		    				mfccWriter.write(" " + mfccs[0][i]);
-		    			}
-		    			mfccWriter.write("\n");
-		    			mfccQTY++;
-		    			
-		    			//Write output stream
-	    				byteArrayOutputStream.flush();
-	        			byteArrayOutputStream.write(scMFCC.getSamples());
-	        			byteArrayOutputStream.flush();
-	    			}
-	    			pair++;
-	    		}
+    			}
     			
+    			scMFCC = mfcc.nextSampleChunk();
+    			chunkIndex++;    			
     		}
     		//If no MFCC descriptor was generated for the audio segment, fill it with one dummy values descriptor
     		if(mfccQTY == 0)
@@ -129,10 +115,7 @@ public class MFCCExtractor
 
     		shotNum++;
     	}
-    	inputVideoMFCC.close();
     	inputAudioMFCCRaw.close();
-    	
-    	
     	mfccWriter.close();    	    	
     	
     	System.exit(0);
